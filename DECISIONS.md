@@ -1,6 +1,6 @@
 # Decisions Log — Case 9: Model Serving Lite
 
-## Assumptions I Made
+## Assumptions I made
 
 1. English-only inputs are the intended use case — because the base model was trained on English text and inputs in other languages produce unreliable confidence scores. Rather than blocking non-English input at the API level I treat non-ASCII character frequency as a drift signal instead.
 
@@ -28,7 +28,7 @@
 
 ---
 
-## What I De-scoped and Why
+## What I de-scoped and why
 
 - GPU support — the free tier has no GPU and DistilBERT runs acceptably on two vCPUs at 130-200 ms.
 - Authentication on /predict — adding an API key adds friction to the demo where the judge calls the endpoint with a bare curl command. Noted as a next step in the README.
@@ -38,7 +38,7 @@
 
 ---
 
-## What I'd Do Differently With Another Day
+## What I'd do differently with another day
 
 - Add a `/metrics` endpoint in Prometheus format so Grafana can visualise request rate, p50/p99 latency and drift signals on one dashboard.
 - Store drift signals in Redis so they survive container restarts and aggregate across workers.
