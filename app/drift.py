@@ -198,9 +198,10 @@ class DriftMonitor:
                         "threshold_pct": DRIFT_THRESHOLD * 100,
                     }
 
-        # OOV rate is checked against a fixed threshold rather than the baseline
-        # because the training data might itself contain rare words.
-        if current["oov_rate"] > OOV_ALERT_THRESHOLD:
+        # OOV rate is only meaningful when we have a training vocabulary to compare
+        # against. With an empty vocab every word looks unknown, which would make
+        # the monitor useless in a fresh environment with no train.csv.
+        if self._train_vocab and current["oov_rate"] > OOV_ALERT_THRESHOLD:
             alerts["oov_rate"] = {
                 "current": current["oov_rate"],
                 "threshold": OOV_ALERT_THRESHOLD,

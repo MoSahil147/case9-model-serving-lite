@@ -106,7 +106,7 @@ def test_drift_status_becomes_ok_after_enough_requests(client):
         client.post(
             "/predict",
             json={
-                "text": "This is a perfectly normal English sentence about product quality."
+                "text": "This product is great quality and arrived quickly. Would recommend to anyone."
             },
         )
 
@@ -122,7 +122,10 @@ def test_drift_detects_non_ascii_spike(client):
     """
     # First fill the window with normal requests so we have a baseline comparison.
     for _ in range(10):
-        client.post("/predict", json={"text": "Normal English sentence here."})
+        client.post(
+            "/predict",
+            json={"text": "Great product, arrived quickly and works perfectly."},
+        )
 
     # Now flood with non-ASCII text simulating a language shift.
     non_english = (
