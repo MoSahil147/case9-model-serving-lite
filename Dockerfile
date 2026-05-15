@@ -20,6 +20,7 @@ WORKDIR /build
 # from the application code. Changing app code will not invalidate this layer.
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+ENV PYTHONPATH=/install/lib/python3.11/site-packages
 
 # Pre-download the model weights using the same MODEL_NAME that the app uses.
 # They land in /root/.cache/huggingface and we copy that cache into the runtime stage.
