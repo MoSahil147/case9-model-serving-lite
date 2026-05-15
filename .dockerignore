@@ -1,0 +1,27 @@
+# Keep the Docker build context small and fast.
+# Everything listed here is excluded from what gets sent to the Docker daemon.
+
+.git
+.gitignore
+.env
+*.env
+
+# Test and dev files have no place in the production image
+tests/
+requirements-dev.txt
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+
+# Fine-tuned weights are not committed so they won't be here,
+# but just in case someone runs retrain.py locally first
+model/
+
+# Logs from local runs
+logs/*.log
+logs/*.jsonl
+
+# macOS noise
+.DS_Store
+__pycache__
+*.pyc

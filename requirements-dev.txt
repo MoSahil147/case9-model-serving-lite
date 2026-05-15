@@ -1,0 +1,15 @@
+# Development and testing dependencies.
+# Install these locally but never include them in the Docker image.
+
+-r requirements.txt
+
+pytest==8.2.0
+httpx==0.27.0          # needed by FastAPI's TestClient for async support
+pytest-asyncio==0.23.6
+ruff==0.4.4            # linting and formatting
+mypy==1.10.0
+
+# For the retrain and evaluate scripts
+scikit-learn==1.5.0
+datasets==2.19.1       # makes loading CSVs for the Trainer much simpler
+accelerate==0.30.0     # required by the HuggingFace Trainer on CPU

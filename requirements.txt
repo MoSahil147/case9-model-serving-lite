@@ -1,0 +1,14 @@
+# Runtime dependencies for the sentiment API service.
+# Pinned minor versions so CI and production always use the same environment.
+
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+transformers==4.41.0
+torch==2.3.0
+pydantic==2.7.1
+
+# Standard library extras we rely on (starlette comes with fastapi)
+python-multipart==0.0.9
+
+# For the drift monitor's OOV calculation we tokenise text ourselves,
+# so no extra NLP library is needed here.
