@@ -1,0 +1,129 @@
+# Retrain and promotion workflow.
+
+# Triggered only when a pull request modifies data/train.csv.
+# Normal code PRs never trigger this workflow and are not affected by it.
+
+# What happens when this runs:
+#   1. Guard: verify data/eval.csv was NOT modified in the same PR.
+#      The held-out set must never be contaminated by training data.
+#   2. Retrain: fine-tune the base model on the new train.csv.
+#   3. Evaluate: run the retrained model against data/eval.csv.
+#   4. Gate: compare accuracy and F1 against the committed baseline.
+#      - If metrics pass: update baseline.json and auto-merge the PR.
+#      - If metrics regress: comment on the PR with details and fail the job.
+
+# Required permissions:
+#   This workflow writes to the repo (to update baseline.json) and calls
+#   the GitHub CLI (to comment on and merge the PR). Both are covered by
+#   the GITHUB_TOKEN with the permissions declared below.
+
+name: Retrain and Promote
+
+on:
+  pull_request:
+    paths:
+      - "data/train.csv"
+
+jobs:
+  retrain-and-gate:
+    name: Retrain and Gate
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out the PR branch
+        uses: actions/checkout@v4
+        with:
+          # We need the PR branch, not main, to access the new training data.
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Guard — reject if eval.csv was also modified
+        # A PR that changes both the training set and the evaluation set
+        # would invalidate the fairness of the gate. We block it here.
+        run: |
+          changed=$(git diff origin/${{ github.base_ref }}...HEAD --name-only)
+          echo "Changed files in this PR:"
+          echo "$changed"
+          if echo "$changed" | grep -q "data/eval.csv"; then
+            echo "ERROR: data/eval.csv was modified in this PR."
+            echo "The held-out evaluation set must never change on a training data PR."
+            exit 1
+          fi
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Retrain the model
+        env:
+          MODEL_NAME: distilbert-base-uncased-finetuned-sst-2-english
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/retrain.py --train data/train.csv --output model/ --epochs 2
+
+      - name: Evaluate against held-out set
+        run: |
+          python scripts/evaluate.py \
+            --model model/ \
+            --eval  data/eval.csv \
+            --out   metrics/candidate.json
+
+      - name: Gate — compare candidate to baseline
+        id: gate
+        run: |
+          python scripts/check_metrics.py \
+            --baseline metrics/baseline.json \
+            --candidate metrics/candidate.json
+
+      - name: Promote — commit new baseline and merge PR
+        # Only runs when the gate script outputs promote=true.
+        if: steps.gate.outputs.promote == 'true'
+        run: |
+          cp metrics/candidate.json metrics/baseline.json
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add metrics/baseline.json
+          git commit -m "chore: promote retrained model — metrics gate passed [skip ci]"
+          git push origin ${{ github.head_ref }}
+
+          # Auto-merge the PR once the baseline is updated.
+          gh pr merge ${{ github.event.pull_request.number }} --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reject — comment on PR and fail the job
+        if: steps.gate.outputs.promote == 'false'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat <<'MSG'
+          ## Metrics Gate Failed
+
+          The retrained model did not meet the promotion threshold.
+
+          | Metric | Baseline | Candidate | Status |
+          |--------|----------|-----------|--------|
+          | See `metrics/candidate.json` for full details. | | | FAILED |
+
+          **What this means:** the new training data caused the model to perform worse
+          on the held-out evaluation set than the current production model does.
+
+          **What to do:**
+          - Check `metrics/candidate.json` (attached as an artefact) for the exact numbers.
+          - Review the new rows added to `data/train.csv` for labelling errors.
+          - Consider adding more balanced examples and re-opening the PR.
+
+          The baseline in `metrics/baseline.json` has NOT been updated.
+          MSG
+          )"
+          exit 1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
