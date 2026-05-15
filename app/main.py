@@ -15,7 +15,9 @@ lives on app.state so it is easy to access and easy to mock in tests.
 
 import os
 import time
-from contextlib import asynccontextmanager # allows lifespan function to pause and resume between server startup and shutdown
+from contextlib import (
+    asynccontextmanager,
+)  # allows lifespan function to pause and resume between server startup and shutdown
 
 from fastapi import FastAPI, Request
 
@@ -34,9 +36,9 @@ async def lifespan(app: FastAPI):
     We use this instead of the deprecated @app.on_event("startup") decorator.
     """
     configure_logging()
-    load_model() # loading the heavy DistilBERT model
-    app.state.drift = DriftMonitor() # initialise the monitring thing
-    yield # server is running
+    load_model()  # loading the heavy DistilBERT model
+    app.state.drift = DriftMonitor()  # initialise the monitring thing
+    yield  # server is running
     # Nothing to clean up on shutdown — torch releases GPU memory automatically.
 
 

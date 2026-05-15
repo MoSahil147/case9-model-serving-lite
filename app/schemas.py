@@ -1,4 +1,4 @@
-# bigger picture caller sends text, PredictRequest, 
+# bigger picture caller sends text, PredictRequest,
 # API responds back with label + score (PredictResponse),
 # health check-> HealthResponse
 """
@@ -28,15 +28,15 @@ class PredictRequest(BaseModel):
 class PredictResponse(BaseModel):
     """What we send back to the caller."""
 
-    label: str # postive or negative
+    label: str  # postive or negative
     # Score is the softmax probability for the winning label — not a raw logit.
     # 0.99 means the model is very confident; 0.51 means it is basically guessing.
     score: float
     # the git SHA gets baked into the Docker Image at built time, if if there is any prediction that goes wrong you can immediately chcek out the exact commit and reproduce! Thats called traceability
-    model_version: str # A git SHA baked into the Docker image lets you reproduce any prediction exactly
+    model_version: str  # A git SHA baked into the Docker image lets you reproduce any prediction exactly
     # End-to-end latency in milliseconds, measured inside the endpoint handler.
     # Useful for spotting when a new model is significantly slower than the old one.
-    latency_ms: float # how long
+    latency_ms: float  # how long
 
 
 class HealthResponse(BaseModel):

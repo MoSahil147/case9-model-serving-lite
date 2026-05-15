@@ -70,21 +70,33 @@ def load_csv(path: str) -> list[dict]:
 
 def tokenise(batch: dict, tokenizer) -> dict:
     """Tokenise a batch of texts. Called by the HuggingFace Dataset.map() method."""
-    return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=128)
+    return tokenizer(
+        batch["text"], truncation=True, padding="max_length", max_length=128
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fine-tune the sentiment model on new data.")
-    parser.add_argument("--train", required=True, help="Path to training CSV (text, label columns).")
-    parser.add_argument("--output", required=True, help="Directory to save the fine-tuned model.")
-    parser.add_argument("--epochs", type=int, default=2, help="Number of training epochs.")
+    parser = argparse.ArgumentParser(
+        description="Fine-tune the sentiment model on new data."
+    )
+    parser.add_argument(
+        "--train", required=True, help="Path to training CSV (text, label columns)."
+    )
+    parser.add_argument(
+        "--output", required=True, help="Directory to save the fine-tuned model."
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=2, help="Number of training epochs."
+    )
     args = parser.parse_args()
 
     print(f"Loading training data from: {args.train}")
     rows = load_csv(args.train)
 
     if len(rows) < 10:
-        print(f"ERROR: only {len(rows)} valid rows found. Need at least 10 to fine-tune.")
+        print(
+            f"ERROR: only {len(rows)} valid rows found. Need at least 10 to fine-tune."
+        )
         sys.exit(1)
 
     print(f"Loaded {len(rows)} training examples.")

@@ -6,6 +6,7 @@ logic, schema validation and error handling. The model itself is mocked
 via the autouse fixture in conftest.py.
 """
 
+
 def test_health_returns_ok(client):
     """The health endpoint should always return 200 with status ok."""
     response = client.get("/healthz")
@@ -20,7 +21,9 @@ def test_predict_returns_expected_shape(client):
     We do not assert the exact label because the mock can be changed by
     other tests; we just check the shape is correct.
     """
-    response = client.post("/predict", json={"text": "This product is absolutely brilliant."})
+    response = client.post(
+        "/predict", json={"text": "This product is absolutely brilliant."}
+    )
 
     assert response.status_code == 200
 
@@ -100,7 +103,12 @@ def test_drift_status_becomes_ok_after_enough_requests(client):
     The mock returns POSITIVE 0.9998 every time which is within normal range.
     """
     for _ in range(12):
-        client.post("/predict", json={"text": "This is a perfectly normal English sentence about product quality."})
+        client.post(
+            "/predict",
+            json={
+                "text": "This is a perfectly normal English sentence about product quality."
+            },
+        )
 
     report = client.get("/drift").json()
     assert report["status"] == "ok"
@@ -117,7 +125,9 @@ def test_drift_detects_non_ascii_spike(client):
         client.post("/predict", json={"text": "Normal English sentence here."})
 
     # Now flood with non-ASCII text simulating a language shift.
-    non_english = "Esto es una reseña en español con muchos caracteres especiales: áéíóú ñ ü"
+    non_english = (
+        "Esto es una reseña en español con muchos caracteres especiales: áéíóú ñ ü"
+    )
     for _ in range(100):
         client.post("/predict", json={"text": non_english})
 

@@ -43,7 +43,9 @@ def test_report_shows_ok_with_normal_english_text():
     """
     monitor = make_monitor()
     for _ in range(15):
-        monitor.record("This product worked exactly as described and I am happy with it.")
+        monitor.record(
+            "This product worked exactly as described and I am happy with it."
+        )
 
     report = monitor.report()
     assert report["status"] == "ok"
@@ -102,6 +104,7 @@ def test_window_rolls_over_at_max_size():
     discarded and n should equal WINDOW_SIZE not the total sent.
     """
     from app.drift import WINDOW_SIZE
+
     monitor = make_monitor()
 
     for i in range(WINDOW_SIZE + 20):

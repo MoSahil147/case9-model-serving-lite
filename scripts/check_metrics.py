@@ -54,9 +54,17 @@ def set_github_output(key: str, value: str) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Decide whether to promote a retrained model.")
-    parser.add_argument("--baseline", required=True, help="Path to the committed baseline metrics JSON.")
-    parser.add_argument("--candidate", required=True, help="Path to the candidate metrics JSON from evaluate.py.")
+    parser = argparse.ArgumentParser(
+        description="Decide whether to promote a retrained model."
+    )
+    parser.add_argument(
+        "--baseline", required=True, help="Path to the committed baseline metrics JSON."
+    )
+    parser.add_argument(
+        "--candidate",
+        required=True,
+        help="Path to the candidate metrics JSON from evaluate.py.",
+    )
     args = parser.parse_args()
 
     baseline = load_json(args.baseline)
@@ -74,12 +82,16 @@ def main():
         candidate_value = candidate.get(metric)
 
         if baseline_value is None or candidate_value is None:
-            print(f"WARNING: '{metric}' is missing from one of the metric files — skipping check.")
+            print(
+                f"WARNING: '{metric}' is missing from one of the metric files — skipping check."
+            )
             continue
 
         delta = candidate_value - baseline_value
 
-        print(f"\n{metric}: baseline={baseline_value:.4f}, candidate={candidate_value:.4f}, delta={delta:+.4f}")
+        print(
+            f"\n{metric}: baseline={baseline_value:.4f}, candidate={candidate_value:.4f}, delta={delta:+.4f}"
+        )
 
         if delta < REGRESSION_TOLERANCE:
             failures.append(

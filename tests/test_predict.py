@@ -16,9 +16,11 @@ async def test_run_inference_returns_label_and_score(mock_pipeline):
     """
     # We need to call load_model() so _classifier is set to the mock.
     import app.predict as predict_module
+
     predict_module.load_model()
 
     from app.predict import run_inference
+
     result = await run_inference("This is a great product.")
 
     assert "label" in result
@@ -34,9 +36,11 @@ async def test_run_inference_passes_text_to_classifier(mock_pipeline):
     This ensures no silent text transformation happens between input and model.
     """
     import app.predict as predict_module
+
     predict_module.load_model()
 
     from app.predict import run_inference
+
     await run_inference("Check this exact string please.")
 
     # mock_pipeline is the mock classifier instance itself.

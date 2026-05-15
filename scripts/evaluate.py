@@ -53,10 +53,18 @@ def load_csv(path: str) -> tuple[list[str], list[int]]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate a model on the held-out eval set.")
-    parser.add_argument("--model", required=True, help="Path to the model directory (output of retrain.py).")
+    parser = argparse.ArgumentParser(
+        description="Evaluate a model on the held-out eval set."
+    )
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="Path to the model directory (output of retrain.py).",
+    )
     parser.add_argument("--eval", required=True, help="Path to the evaluation CSV.")
-    parser.add_argument("--out", required=True, help="Where to write the metrics JSON file.")
+    parser.add_argument(
+        "--out", required=True, help="Where to write the metrics JSON file."
+    )
     args = parser.parse_args()
 
     print(f"Loading evaluation data from: {args.eval}")

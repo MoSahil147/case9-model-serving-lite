@@ -38,14 +38,18 @@ def configure_logging() -> None:
     Call this once from app startup. We do NOT use a JSON logging library
     because we want zero extra dependencies for something this simple.
     """
-    handler = logging.StreamHandler() # creates the handler which writes to stdout
+    handler = logging.StreamHandler()  # creates the handler which writes to stdout
     # The formatter just passes the message through. We build the full JSON
     # string ourselves in the middleware so we have complete control.
-    handler.setFormatter(logging.Formatter("%(message)s")) # outputting only messages nothing else
+    handler.setFormatter(
+        logging.Formatter("%(message)s")
+    )  # outputting only messages nothing else
 
-    root = logging.getLogger() # gets the root logger, the top level logger that all other logger inherit from
+    root = (
+        logging.getLogger()
+    )  # gets the root logger, the top level logger that all other logger inherit from
     root.addHandler(handler)
-    root.setLevel(logging.INFO) # info
+    root.setLevel(logging.INFO)  # info
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -58,15 +62,17 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = str(uuid.uuid4()) # generate random unique ID
-        start_time = time.perf_counter() # captures current time in high resolution
+        request_id = str(uuid.uuid4())  # generate random unique ID
+        start_time = time.perf_counter()  # captures current time in high resolution
 
         # Read and cache the raw request body.
         # BaseHTTPMiddleware re-populates request._body after we read it,
         # so the actual endpoint handler still receives the full body.
         raw_body = await request.body()
 
-        response = await call_next(request) # await is used beacuse this is async fuction
+        response = await call_next(
+            request
+        )  # await is used beacuse this is async fuction
 
         duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
@@ -79,19 +85,27 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         response_body = b"".join(response_chunks)
 
         log_record = {
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), # time in ISO format
-            "request_id": request_id, # UUID
-            "method": request.method, # GET, POST
-            "path": str(request.url.path), #/predict or /health
-            "status": response.status_code, # 200, 500, etc status code
-            "duration_ms": duration_ms, # how long whole request took
+            "ts": time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+            ),  # time in ISO format
+            "request_id": request_id,  # UUID
+            "method": request.method,  # GET, POST
+            "path": str(request.url.path),  # /predict or /health
+            "status": response.status_code,  # 200, 500, etc status code
+            "duration_ms": duration_ms,  # how long whole request took
             # Truncate long inputs so the log file does not balloon in size.
             # 500 characters is enough to reproduce any realistic prediction.
             "input_text": raw_body.decode("utf-8", errors="replace")[:500],
             "input_length_bytes": len(raw_body),
-            "response_snippet": response_body.decode("utf-8", errors="replace")[:500], # first 500 chars of response enough to see the prediction 
-            "client_ip": request.client.host if request.client else None, #IP address of who sends the request
-            "user_agent": request.headers.get("user-agent", ""), # broweswer of the HTTP client
+            "response_snippet": response_body.decode("utf-8", errors="replace")[
+                :500
+            ],  # first 500 chars of response enough to see the prediction
+            "client_ip": request.client.host
+            if request.client
+            else None,  # IP address of who sends the request
+            "user_agent": request.headers.get(
+                "user-agent", ""
+            ),  # broweswer of the HTTP client
         }
 
         logger.info(json.dumps(log_record))
