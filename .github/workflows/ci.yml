@@ -139,7 +139,7 @@ jobs:
           # TODO: replace YOUR_HF_USERNAME with your actual HuggingFace username.
           api.upload_folder(
               folder_path=".",
-              repo_id="YOUR_HF_USERNAME/sentiment-api",
+              repo_id="sahil147/sentiment-api",
               repo_type="space",
               ignore_patterns=[
                   ".git",
