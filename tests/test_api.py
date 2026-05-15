@@ -6,9 +6,6 @@ logic, schema validation and error handling. The model itself is mocked
 via the autouse fixture in conftest.py.
 """
 
-import json
-
-
 def test_health_returns_ok(client):
     """The health endpoint should always return 200 with status ok."""
     response = client.get("/healthz")

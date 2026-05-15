@@ -6,7 +6,6 @@ statistical logic in isolation using fake input data. This means they are
 fast and deterministic.
 """
 
-import pytest
 from app.drift import DriftMonitor
 
 
