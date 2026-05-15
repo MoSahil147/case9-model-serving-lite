@@ -48,6 +48,7 @@ DRIFT_THRESHOLD = float(os.getenv("DRIFT_THRESHOLD", "0.25"))
 # OOV rate above this absolute value is always flagged, regardless of baseline.
 # if 30% words are unkown, Alert Alert
 OOV_ALERT_THRESHOLD = 0.30
+MIN_NON_ASCII_ALERT_DELTA = 0.01
 
 
 # we are creating a monitor to check Drift
@@ -181,22 +182,37 @@ class DriftMonitor:
 
         alerts: dict = {}
 
-        # Check length and non-ASCII signals against the baseline.
-        for signal in ("mean_length", "non_ascii_frac"):
-            baseline_value = self.baseline.get(
-                signal, 0.0
-            )  # safely fetches the baseline values defaulting to 0, if somehow is missing
-            current_value = current[signal]
+        baseline_mean_length = self.baseline.get("mean_length", 0.0)
+        current_mean_length = current["mean_length"]
+        if baseline_mean_length > 0:
+            relative_shift = (
+                abs(current_mean_length - baseline_mean_length) / baseline_mean_length
+            )
+            if relative_shift > DRIFT_THRESHOLD:
+                alerts["mean_length"] = {
+                    "baseline": baseline_mean_length,
+                    "current": current_mean_length,
+                    "shift_pct": round(relative_shift * 100, 1),
+                    "threshold_pct": DRIFT_THRESHOLD * 100,
+                }
 
-            if baseline_value > 0:  # this thing guards againts division by zero
-                relative_shift = abs(current_value - baseline_value) / baseline_value
-                if relative_shift > DRIFT_THRESHOLD:
-                    alerts[signal] = {
-                        "baseline": baseline_value,
-                        "current": current_value,
-                        "shift_pct": round(relative_shift * 100, 1),
-                        "threshold_pct": DRIFT_THRESHOLD * 100,
-                    }
+        baseline_non_ascii = self.baseline.get("non_ascii_frac", 0.0)
+        current_non_ascii = current["non_ascii_frac"]
+        non_ascii_delta = current_non_ascii - baseline_non_ascii
+        non_ascii_threshold = max(
+            baseline_non_ascii * DRIFT_THRESHOLD, MIN_NON_ASCII_ALERT_DELTA
+        )
+        if non_ascii_delta > non_ascii_threshold:
+            alerts["non_ascii_frac"] = {
+                "baseline": baseline_non_ascii,
+                "current": current_non_ascii,
+                "shift_pct": round(
+                    (non_ascii_delta / max(baseline_non_ascii, non_ascii_threshold))
+                    * 100,
+                    1,
+                ),
+                "threshold_pct": DRIFT_THRESHOLD * 100,
+            }
 
         # OOV rate is only meaningful when we have a training vocabulary to compare
         # against. With an empty vocab every word looks unknown, which would make

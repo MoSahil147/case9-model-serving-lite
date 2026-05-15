@@ -87,11 +87,14 @@ def test_report_detects_length_drift():
 def test_report_detects_oov_rate_above_threshold():
     """
     Text made up entirely of made-up words should push the OOV rate above 0.30
-    because none of those words are in the empty fallback vocabulary.
+    when we have a real training vocabulary to compare against.
     """
-    monitor = make_monitor()
+    monitor = DriftMonitor()
     for _ in range(15):
-        monitor.record("zxqwerty flibbertigibbet wumboozle glarptastic snorkelwump")
+        monitor.record(
+            "zxqwerty flibbertigibbet wumboozle glarptastic snorkelwump"
+            " plorbazine snarflequark"
+        )
 
     report = monitor.report()
     assert report["status"] == "alert"

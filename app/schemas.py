@@ -8,7 +8,7 @@ Keeping these in a separate file means the main app and the tests
 can both import them without pulling in FastAPI or torch.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PredictRequest(BaseModel):
@@ -27,6 +27,8 @@ class PredictRequest(BaseModel):
 
 class PredictResponse(BaseModel):
     """What we send back to the caller."""
+
+    model_config = ConfigDict(protected_namespaces=())
 
     label: str  # postive or negative
     # Score is the softmax probability for the winning label — not a raw logit.
