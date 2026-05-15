@@ -11,7 +11,7 @@
 #   cold-start model load to roughly 3-5 seconds (reading from disk, not network).
 
 
-# ─── Stage 1: Builder ────────────────────────────────────────────────────────
+# Stage 1: Builder
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
@@ -29,7 +29,7 @@ ENV MODEL_NAME=${MODEL_NAME}
 RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='${MODEL_NAME}')"
 
 
-# ─── Stage 2: Runtime ────────────────────────────────────────────────────────
+# Stage 2: Runtime
 FROM python:3.11-slim AS runtime
 
 # Run as a non-root user. If the container is ever compromised, the attacker
