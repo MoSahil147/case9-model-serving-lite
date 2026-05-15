@@ -1,0 +1,5 @@
+{
+  "accuracy": 0.93,
+  "f1": 0.92,
+  "note": "Baseline measured against data/eval.csv using distilbert-base-uncased-finetuned-sst-2-english with no fine-tuning. The retrain workflow must beat these numbers (within a 2% tolerance) before a new model is promoted."
+}
