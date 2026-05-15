@@ -70,7 +70,7 @@ Response:
 | `/healthz` | GET | Liveness check for uptime monitors |
 | `/predict` | POST | Classify text as POSITIVE or NEGATIVE |
 | `/drift` | GET | Current drift monitoring report |
-| `/docs` | GET | Auto-generated OpenAPI documentation |
+| `/docs` | GET | Auto-generated OpenAPI documentation — live at https://sahil147-sentiment-api.hf.space/docs |
 
 ---
 
