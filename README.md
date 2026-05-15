@@ -1,13 +1,3 @@
----
-title: Sentiment API
-emoji: 📊
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # Case 9: Model Serving Lite
 
 **Live demo:** https://sahil147-sentiment-api.hf.space
