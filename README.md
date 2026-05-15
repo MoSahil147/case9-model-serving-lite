@@ -1,20 +1,30 @@
+---
+title: Sentiment API
+emoji: 📊
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Case 9: Model Serving Lite
 
 **Live demo:** https://sahil147-sentiment-api.hf.space
 **Repo:** https://github.com/MoSahil147/case9-model-serving-lite
-
+**Demo video:** *(add Loom or YouTube link after recording)*
 
 [![CI](https://github.com/MoSahil147/case9-model-serving-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/MoSahil147/case9-model-serving-lite/actions/workflows/ci.yml)
 
 ---
 
-## What This Is
+## What this is
 
 A sentiment classification API that takes a data scientist's notebook model and turns it into a monitored production service. It is built for any team that wants to ship an NLP model and actually know when it starts going wrong before a customer does.
 
 ---
 
-## How to Run Locally
+## How to run locally
 
 ```bash
 git clone https://github.com/MoSahil147/case9-model-serving-lite.git
@@ -85,7 +95,7 @@ This was the most interesting part of the project for me. I built four layers of
 
 **Layer 1: Input drift (leading indicator)**
 
-The `/drift` endpoint compares the statistical properties of recent requests against the training data: character length, non-ASCII fraction and vocabulary novelty. A shift in any of these signals means the model is seeing inputs that look very different from what it was trained on. You can set up UptimeRobot (free tier) to ping `/drift` every five minutes and alert when `"status": "alert"` comes back.
+The `/drift` endpoint compares the statistical properties of recent requests against the training data: character length, non-ASCII fraction and vocabulary novelty. A shift in any of these signals means the model is seeing inputs that look very different from what it was trained on. You can set up UptimeRobot to ping `/drift` every five minutes and alert when `"status": "alert"` comes back.
 
 **Layer 2: Confidence distribution (concurrent indicator)**
 
@@ -138,7 +148,7 @@ PR touching data/train.csv
 
 ---
 
-## What Is NOT Done
+## What's NOT done
 
 - **Authentication.** A real service would need an API key in the request header. I left it out so judges can call the endpoint with a bare curl command without any setup.
 - **Persistent drift storage.** The drift window lives in memory and resets on container restart. Production would push signals to Prometheus and query them in Grafana.
@@ -147,21 +157,10 @@ PR touching data/train.csv
 
 ---
 
-## In Production I Would Also Add
+## In production, I would also add
 
 - A `/metrics` endpoint in Prometheus format so Grafana can show request rate, latency percentiles and drift signals on one dashboard.
 - Redis-backed drift storage so signals survive container restarts and aggregate across workers.
 - Rate limiting via SlowAPI to stop a single caller from flooding the service.
 - A warm-up ping from the CI deploy step so HF Spaces does not serve a cold-start request to the first real caller.
 - Proper API key authentication with key rotation and a revocation endpoint.
-
-
----
-title: Sentiment API
-emoji: 📊
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
