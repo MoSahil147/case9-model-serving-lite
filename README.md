@@ -11,6 +11,7 @@ pinned: false
 # Case 9: Model Serving Lite
 
 **Live demo:** https://sahil147-sentiment-api.hf.space
+
 **Repo:** https://github.com/MoSahil147/case9-model-serving-lite
 
 ## See it in action
