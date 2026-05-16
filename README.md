@@ -16,6 +16,8 @@ pinned: false
 
 ## See it in action
 
+**Demo video:** https://youtu.be/I72wTh14LEI?si=YVxEWzcr2F0cD-RF
+
 ![API in action](demo.gif)
 
 [![CI](https://github.com/MoSahil147/case9-model-serving-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/MoSahil147/case9-model-serving-lite/actions/workflows/ci.yml)
