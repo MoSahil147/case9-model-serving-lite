@@ -10,6 +10,8 @@ pinned: false
 
 # Case 9: Model Serving Lite
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/MoSahil147/case9-model-serving-lite)
+
 **Live demo:** https://sahil147-sentiment-api.hf.space
 
 **Repo:** https://github.com/MoSahil147/case9-model-serving-lite
