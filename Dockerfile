@@ -40,7 +40,8 @@ ENV HF_HUB_READ_TIMEOUT=120
 ENV HF_HUB_ETAG_TIMEOUT=30
 
 # Download model weights with retry + exponential backoff to handle HF Hub 429s.
-RUN python -c "
+# EOF without quotes so ${MODEL_NAME} is expanded by the shell before Python sees it.
+RUN python << EOF
 import time
 from transformers import pipeline
 
@@ -52,11 +53,11 @@ for attempt in range(5):
     except Exception as e:
         if attempt < 4:
             wait = 2 ** attempt
-            print(f'Attempt {attempt + 1} failed ({e}), retrying in {wait}s...')
+            print(f'Attempt {attempt + 1} failed, retrying in {wait}s...')
             time.sleep(wait)
         else:
             raise
-"
+EOF
 
 
 # Stage 2: Runtime
