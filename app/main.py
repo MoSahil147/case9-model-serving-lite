@@ -13,18 +13,18 @@ manager. All state that must persist across requests (the drift monitor)
 lives on app.state so it is easy to access and easy to mock in tests.
 """
 
-import os
-import time
+import os # envriontment variables
+import time # to measure latency
 from contextlib import (
-    asynccontextmanager,
+    asynccontextmanager, # manage stratup/shutdown
 )  # allows lifespan function to pause and resume between server startup and shutdown
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request # the web framework
 
-from app.drift import DriftMonitor
-from app.middleware import LoggingMiddleware, configure_logging
-from app.predict import load_model, run_inference
-from app.schemas import HealthResponse, PredictRequest, PredictResponse
+from app.drift import DriftMonitor # track data drift
+from app.middleware import LoggingMiddleware, configure_logging # logging request
+from app.predict import load_model, run_inference # AI prediction
+from app.schemas import DriftResponse, HealthResponse, PredictRequest, PredictResponse # data shapes
 
 
 @asynccontextmanager
@@ -35,11 +35,28 @@ async def lifespan(app: FastAPI):
 
     We use this instead of the deprecated @app.on_event("startup") decorator.
     """
-    configure_logging()
+    configure_logging() # setup logging
     load_model()  # loading the heavy DistilBERT model
+    # stores in _classifer globl variable 
+    
     app.state.drift = DriftMonitor()  # initialise the monitring thing
+    # reads the train.csv, builds vocab and computes baseline
+    
+# app.state = FastAPI's built-in storage bag
+#             for things that persist across requests
+
+# app.state.drift = DriftMonitor instance
+#                   shared by ALL requests ✅
+
+# Why app.state and not global variable?
+#   Global → hard to mock in tests ❌
+#   app.state → easy to replace in tests ✅
+
+#   test: app.state.drift = MockDriftMonitor()
+  
     yield  # server is running
-    # Nothing to clean up on shutdown — torch releases GPU memory automatically.
+
+    app.state.drift = None
 
 
 app = FastAPI(
@@ -66,9 +83,27 @@ def health_check():
     """
     return HealthResponse(status="ok")
 
+# If model fails to load
+# → app crashes at startup
+# → /healthz never becomes reachable
+
+# So if /healthz responds
+# → model MUST be loaded ✅
+# No need to double-check!
+
+# Health check is instant
+# → no waiting → no blocking
+# → no need for async
+# → plain def is fine ✅
 
 @app.post("/predict", response_model=PredictResponse, tags=["inference"])
 async def predict(request_body: PredictRequest, request: Request):
+    
+#     → reads incoming JSON
+# → validates against PredictRequest
+# → if invalid → returns 422 error automatically ✅
+# → if valid → passes to function
+
     """
     Run sentiment classification on a piece of text.
 
@@ -86,6 +121,8 @@ async def predict(request_body: PredictRequest, request: Request):
     # Tell the drift monitor about this request so it can update its
     # rolling statistics. We do this after inference so a slow model does
     # not slow down the monitoring path.
+    
+    # record to drift monitor, after inference
     request.app.state.drift.record(request_body.text)
 
     return PredictResponse(
@@ -96,7 +133,7 @@ async def predict(request_body: PredictRequest, request: Request):
     )
 
 
-@app.get("/drift", tags=["ops"])
+@app.get("/drift", response_model=DriftResponse, tags=["ops"])
 def drift_report(request: Request):
     """
     Return the current drift monitoring report.

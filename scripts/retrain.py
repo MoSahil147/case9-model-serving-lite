@@ -27,25 +27,27 @@ import csv
 import os
 import sys
 
-# We import these here so the script fails fast with a clear error message
-# if the dev dependencies are not installed, rather than mid-training.
+# Fail fast: if HuggingFace libraries aren't installed, exit with a clear message
+# rather than crashing mid-training with a confusing traceback.
 try:
-    from datasets import Dataset
+    from datasets import Dataset  # HuggingFace Dataset wrapper around our CSV rows
     from transformers import (
-        AutoModelForSequenceClassification,
-        AutoTokenizer,
-        Trainer,
-        TrainingArguments,
+        AutoModelForSequenceClassification,  # loads a pre-trained model for text classification
+        AutoTokenizer,                        # loads the matching tokenizer for the model
+        Trainer,                              # high-level training loop (handles batching, backprop, etc.)
+        TrainingArguments,                    # config object for hyperparameters and output settings
     )
 except ImportError as e:
     print(f"Missing dependency: {e}")
-    print("Run: pip install -r requirements-dev.txt")
+    print("Run: uv sync")
     sys.exit(1)
 
 
+# Which pre-trained model to start from. Can be overridden by setting the
+# MODEL_NAME env var (e.g. to switch to a larger BERT variant without code changes).
 BASE_MODEL = os.getenv(
     "MODEL_NAME",
-    "distilbert-base-uncased-finetuned-sst-2-english",
+    "distilbert-base-uncased-finetuned-sst-2-english",  # default: DistilBERT already fine-tuned on SST-2 sentiment
 )
 
 
@@ -53,29 +55,39 @@ def load_csv(path: str) -> list[dict]:
     """Read the training CSV and return a list of {text, label} dicts."""
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f)  # parses header row automatically; each row is a dict
         for row in reader:
             text = row.get("text", "").strip()
             label_raw = row.get("label", "").strip()
 
+            # Only accept rows where label is exactly "0" or "1".
+            # Anything else (missing column, typo, empty string) is silently skipped
+            # so one bad row doesn't abort the whole training run.
             if not text or label_raw not in ("0", "1"):
-                # Skip malformed rows rather than crashing the whole run.
                 print(f"Skipping malformed row: {row}")
                 continue
 
+            # Convert label string to int: "0" → 0 (NEGATIVE), "1" → 1 (POSITIVE)
             rows.append({"text": text, "label": int(label_raw)})
 
     return rows
 
 
 def tokenise(batch: dict, tokenizer) -> dict:
-    """Tokenise a batch of texts. Called by the HuggingFace Dataset.map() method."""
+    """Tokenise a batch of texts. Called by the HuggingFace Dataset.map() method.
+
+    Tokenization converts raw strings into integer token IDs the model can process.
+    - truncation=True:       clips texts longer than max_length (avoids memory errors)
+    - padding="max_length":  pads shorter texts with [PAD] tokens so all tensors are the same shape
+    - max_length=128:        128 tokens covers most short reviews; longer texts are cut off
+    """
     return tokenizer(
         batch["text"], truncation=True, padding="max_length", max_length=128
     )
 
 
 def main():
+    # --- 1. Parse command-line arguments ---
     parser = argparse.ArgumentParser(
         description="Fine-tune the sentiment model on new data."
     )
@@ -87,12 +99,16 @@ def main():
     )
     parser.add_argument(
         "--epochs", type=int, default=2, help="Number of training epochs."
+        # 2 epochs is a sweet spot: enough to adapt to new data, fast enough for CI runners.
     )
     args = parser.parse_args()
 
+    # --- 2. Load and validate training data ---
     print(f"Loading training data from: {args.train}")
     rows = load_csv(args.train)
 
+    # Guard: refuse to fine-tune on a trivially small dataset — the model would
+    # overfit badly and the resulting weights would be meaningless.
     if len(rows) < 10:
         print(
             f"ERROR: only {len(rows)} valid rows found. Need at least 10 to fine-tune."
@@ -101,49 +117,56 @@ def main():
 
     print(f"Loaded {len(rows)} training examples.")
 
-    # HuggingFace Dataset is more ergonomic with the Trainer than plain lists.
+    # --- 3. Wrap rows in a HuggingFace Dataset ---
+    # Dataset.from_list() converts a plain Python list of dicts into a columnar
+    # Dataset object that Trainer and .map() understand natively.
     dataset = Dataset.from_list(rows)
 
+    # --- 4. Load the pre-trained base model and its tokenizer ---
     print(f"Loading base model: {BASE_MODEL}")
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    # num_labels=2 matches our binary task: POSITIVE (1) vs NEGATIVE (0).
+    # The pre-trained classification head already has 2 outputs for SST-2, so weights are reused.
     model = AutoModelForSequenceClassification.from_pretrained(BASE_MODEL, num_labels=2)
 
-    # Tokenise all examples upfront so training is not bottlenecked on
-    # on-the-fly tokenisation during each batch.
+    # --- 5. Tokenise the entire dataset upfront ---
+    # Doing this before training (rather than on-the-fly per batch) means the GPU/CPU
+    # is never idle waiting for tokenization; it can just pull pre-processed tensors.
     tokenised = dataset.map(
         lambda batch: tokenise(batch, tokenizer),
-        batched=True,
-        remove_columns=["text"],
+        batched=True,          # process multiple rows at once (faster than row-by-row)
+        remove_columns=["text"],  # drop raw text column; the model only needs token IDs
     )
-    tokenised.set_format("torch")
+    tokenised.set_format("torch")  # return PyTorch tensors instead of Python lists
 
+    # --- 6. Configure training hyperparameters ---
     training_args = TrainingArguments(
-        output_dir=args.output,
-        num_train_epochs=args.epochs,
-        per_device_train_batch_size=16,
-        # We evaluate on the training set itself here — the real evaluation
-        # against the held-out set happens separately in evaluate.py.
-        # This is just to give us a training loss curve in the Trainer output.
+        output_dir=args.output,               # where to write checkpoints and final model
+        num_train_epochs=args.epochs,         # how many full passes over the training data
+        per_device_train_batch_size=16,       # 16 samples per gradient update step
+        # No mid-training evaluation — the held-out test set is checked separately
+        # by evaluate.py after training completes. This keeps training fast.
         evaluation_strategy="no",
-        save_strategy="epoch",
-        load_best_model_at_end=False,
-        logging_steps=10,
-        # No GPU — disable mixed precision so we do not need CUDA.
-        fp16=False,
-        report_to="none",  # do not send to W&B or TensorBoard
+        save_strategy="epoch",                # checkpoint after every epoch (allows recovery)
+        load_best_model_at_end=False,         # irrelevant since we don't evaluate mid-training
+        logging_steps=10,                     # print training loss every 10 steps
+        fp16=False,                           # disable half-precision; CI runners have no CUDA GPU
+        report_to="none",                     # don't push metrics to W&B, TensorBoard, etc.
     )
 
+    # --- 7. Build the Trainer and run fine-tuning ---
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenised,
+        train_dataset=tokenised,  # only a train split; no eval_dataset needed here
     )
 
     print(f"Starting fine-tuning for {args.epochs} epoch(s)...")
-    trainer.train()
+    trainer.train()  # blocks until all epochs are complete
 
-    # Save the final model and tokeniser together so evaluate.py and the
-    # Docker image can load them with a single from_pretrained() call.
+    # --- 8. Persist the fine-tuned model to disk ---
+    # Saving model + tokenizer together means any downstream code (evaluate.py,
+    # the Docker API image) can load both with a single from_pretrained(output_dir) call.
     trainer.save_model(args.output)
     tokenizer.save_pretrained(args.output)
 
