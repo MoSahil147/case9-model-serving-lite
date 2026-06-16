@@ -8,7 +8,6 @@
 
 # Test and dev files have no place in the production image
 tests/
-requirements-dev.txt
 .pytest_cache/
 .mypy_cache/
 htmlcov/
