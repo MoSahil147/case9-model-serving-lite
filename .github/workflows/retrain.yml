@@ -74,26 +74,19 @@ jobs:
           python-version: "3.11"
           enable-cache: true
       
-      - name: Create virtual environment
-        run: uv venv
-
-      # step 4
-      # install dependencies
-      - name: Install dependencies
-        run: uv sync
-
+      # step 4 — uv run --frozen handles venv + install automatically
       # step 5
       # will retrain the model
       - name: Retrain the model
         env:
           MODEL_NAME: distilbert-base-uncased-finetuned-sst-2-english
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: uv run python scripts/retrain.py --train data/train.csv --output model/ --epochs 2
+        run: uv run --frozen python scripts/retrain.py --train data/train.csv --output model/ --epochs 2
 
       # step 6 will evaluate
       - name: Evaluate against held-out set
         run: |
-          uv run python scripts/evaluate.py \
+          uv run --frozen python scripts/evaluate.py \
             --model model/ \
             --eval  data/eval.csv \
             --out   metrics/candidate.json
@@ -102,7 +95,7 @@ jobs:
       - name: Gate — compare candidate to baseline
         id: gate
         run: |
-          uv run python scripts/check_metrics.py \
+          uv run --frozen python scripts/check_metrics.py \
             --baseline metrics/baseline.json \
             --candidate metrics/candidate.json
 
