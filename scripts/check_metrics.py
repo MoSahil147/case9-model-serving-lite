@@ -22,10 +22,10 @@ Exit codes:
     1 — gate failed, promote=false written to GITHUB_OUTPUT
 """
 
-import argparse   # parses --baseline and --candidate paths from the command line
-import json       # reads metric JSON files and pretty-prints them
-import os         # reads GITHUB_OUTPUT env var and METRIC_TOLERANCE override
-import sys        # sys.exit(0) for pass, sys.exit(1) for fail
+import argparse  # parses --baseline and --candidate paths from the command line
+import json  # reads metric JSON files and pretty-prints them
+import os  # reads GITHUB_OUTPUT env var and METRIC_TOLERANCE override
+import sys  # sys.exit(0) for pass, sys.exit(1) for fail
 
 
 # How much the new model is allowed to drop before we reject it.
@@ -38,12 +38,14 @@ REGRESSION_TOLERANCE = float(os.getenv("METRIC_TOLERANCE", "-0.02"))
 def load_json(path: str) -> dict:
     """Read a JSON file from disk and return it as a Python dict."""
     with open(path, encoding="utf-8") as f:
-        return json.load(f)  # e.g. {"accuracy": 0.925, "f1": 0.919, "n_eval_examples": 200}
+        return json.load(
+            f
+        )  # e.g. {"accuracy": 0.925, "f1": 0.919, "n_eval_examples": 200}
 
 
 def set_github_output(key: str, value: str) -> None:
-    # In a normal Python script, if you want to pass a value to the next step, you'd use a variable. 
-    # But in GitHub Actions, each step runs in its own separate shell process — variables don't survive between steps. 
+    # In a normal Python script, if you want to pass a value to the next step, you'd use a variable.
+    # But in GitHub Actions, each step runs in its own separate shell process — variables don't survive between steps.
     # So GitHub invented a special mechanism: a shared temp file.
     """
     Write a key=value pair to the GITHUB_OUTPUT file so the workflow can
@@ -86,7 +88,7 @@ def main():
     args = parser.parse_args()
 
     # --- 2. Load both JSON files into dicts ---
-    baseline  = load_json(args.baseline)   # current production model's scores
+    baseline = load_json(args.baseline)  # current production model's scores
     candidate = load_json(args.candidate)  # newly trained model's scores
 
     # Print both side by side for visibility in the CI logs.
@@ -102,7 +104,7 @@ def main():
 
     # Loop over both metrics we care about: accuracy and F1.
     for metric in ("accuracy", "f1"):
-        baseline_value  = baseline.get(metric)   # e.g. 0.92
+        baseline_value = baseline.get(metric)  # e.g. 0.92
         candidate_value = candidate.get(metric)  # e.g. 0.89
 
         # If either file is missing this metric key, skip instead of crashing.

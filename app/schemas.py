@@ -6,11 +6,11 @@
 #         ↓
 # API predicts sentiment
 #         ↓
-#API sends back label + score
+# API sends back label + score
 #
-#This file defines EXACTLY:
-#→ what the incoming data must look like, text field (1-2048 chars)
-#→ what the outgoing data will look like, label, score, version, latency
+# This file defines EXACTLY:
+# → what the incoming data must look like, text field (1-2048 chars)
+# → what the outgoing data will look like, label, score, version, latency
 
 # Caller must send THIS → PredictRequest
 # API will return THIS  → PredictResponse
@@ -27,15 +27,19 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+
 # what the caller sends!
 class PredictRequest(BaseModel):
     """What the caller sends us."""
 
-    text: Annotated[str, Field(
-        min_length=1,
-        max_length=2048,
-        description="The text to classify as POSITIVE or NEGATIVE.",
-    )]
+    text: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=2048,
+            description="The text to classify as POSITIVE or NEGATIVE.",
+        ),
+    ]
 
     @field_validator("text")
     @classmethod
@@ -45,10 +49,11 @@ class PredictRequest(BaseModel):
 
 class PredictResponse(BaseModel):
     """What we send back to the caller."""
+
     # Pydantic v2 reserves the word "model_" as a protected namespace, it use for model_fields, model_validate, model_dump etc.
     # Without this config: model_version → WARNING: conflicts with protected namespace ⚠️
     # With this config: protected_namespaces=() → empty = no protected namespaces model_version → works fine ✅
-    
+
     model_config = ConfigDict(protected_namespaces=())
 
     label: str  # postive or negative

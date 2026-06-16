@@ -21,7 +21,9 @@ import asyncio  # helps to run things concurrently, allows python to do multiple
 import os
 from typing import Any
 
-from transformers import pipeline  # imported pipeline from transformers library, easy wrapper around the complex models!
+from transformers import (
+    pipeline,
+)  # imported pipeline from transformers library, easy wrapper around the complex models!
 # converts text to tokens manually, runs model manually, converts output manually
 
 # The model name can be overridden via environment variable so we can
@@ -36,7 +38,7 @@ MODEL_NAME = os.getenv(
 _classifier = None
 
 
-def load_model() -> None: # None as the function doenst return anything
+def load_model() -> None:  # None as the function doenst return anything
     """
     Download (or load from cache) the sentiment model and store it globally.
     Called once from the FastAPI lifespan context manager.
@@ -45,11 +47,9 @@ def load_model() -> None: # None as the function doenst return anything
 
     print(f"Loading model: {MODEL_NAME}")
     # device=-1 forces CPU inference. We have no GPU on the free-tier host.
-    _classifier = pipeline(
-        "sentiment-analysis", model=MODEL_NAME, device_map="auto"
-    )
-    print("Model loaded and ready.") 
-    # it is called once from the FastAPI lifespan context manager! By the time first /predict request arrives the model is already sitting in memory and is ready to go! 
+    _classifier = pipeline("sentiment-analysis", model=MODEL_NAME, device_map="auto")
+    print("Model loaded and ready.")
+    # it is called once from the FastAPI lifespan context manager! By the time first /predict request arrives the model is already sitting in memory and is ready to go!
 
 
 def _do_inference(text: str) -> dict[str, Any]:
@@ -67,7 +67,7 @@ def _do_inference(text: str) -> dict[str, Any]:
     # truncation=True silently cuts text longer than 512 tokens.
     # We already cap input at 2048 characters in the schema but a single
     # character can be multiple tokens so we still need this guard.
-    
+
     # _classifier is our loaded model sitting in memory, we call it like function passing the text
     result = _classifier(text, truncation=True, max_length=512)  # type: ignore[misc], claasifier is the loaded model sitting in memory loaded at startup, if text too long truncation=True silently cuts it at the limit, token limit is 512
     # truncation=True, silently cuts at the limit instead of crashing

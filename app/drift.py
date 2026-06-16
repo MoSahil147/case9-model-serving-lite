@@ -53,7 +53,8 @@ MIN_NON_ASCII_ALERT_DELTA = 0.01
 
 # Production: DRIFT_WINDOW=500  → larger window
 # Testing:    DRIFT_WINDOW=10   → smaller window
-# No code changes needed 
+# No code changes needed
+
 
 # we are creating a monitor to check Drift
 class DriftMonitor:
@@ -67,16 +68,16 @@ class DriftMonitor:
         # init sets up the monitor
         # record records each request
         # report checks the drift
-        
+
         # deque automatically discards old entries once the window is full.
         # double ended queue, like a list but with max size, auto drops oldest entires when new ones are added
         self.window: collections.deque = collections.deque(maxlen=WINDOW_SIZE)
 
         # set because, its like list but no dups
-        
+
         self._train_vocab: set = set()  # set of all words seen in training data, used to detect OOV words in live requests
         # set = no dups and very fast lookup
-        
+
         # eveyrthing will be compared against the baseline and will store what a normal will look like
         self.baseline: dict = self._compute_baseline(
             Path(train_csv_path)
@@ -105,7 +106,6 @@ class DriftMonitor:
         texts = []  # empty list to collect all the training texts
         # utf-8, represents texts as a sequenece of bytes
         with open(train_path, newline="", encoding="utf-8") as f:
-            
             # 1st read ths CSV, {"text": "Amazing product!", "label": "POSITIVE"}
             reader = csv.DictReader(f)  # reads CSV where each row becomes a dict
             for row in reader:
@@ -116,7 +116,7 @@ class DriftMonitor:
                 if text:  # skip empty rows
                     texts.append(text)
                     # Build vocabulary as lowercase whitespace-split tokens. first lower case, then split and add to vocab set
-                    self._train_vocab.update(re.findall(r'\b\w+\b', text.lower()))
+                    self._train_vocab.update(re.findall(r"\b\w+\b", text.lower()))
                     # "Amazing Product!" → "amazing product!" → ["amazing", "product!"]
 
         # if file exists but has no data, fall back to defaults
@@ -125,9 +125,9 @@ class DriftMonitor:
 
         # mean length of each text or word
         mean_length = statistics.mean(len(t) for t in texts)
-    # texts = ["Amazing!", "Terrible service!", "Good product"]
-    # lengths = [8, 18, 12]
-    # mean = (8 + 18 + 12) / 3 = 12.67
+        # texts = ["Amazing!", "Terrible service!", "Good product"]
+        # lengths = [8, 18, 12]
+        # mean = (8 + 18 + 12) / 3 = 12.67
 
         # Count non-ASCII characters across all training texts.
         non_ascii_fracs = [
@@ -145,28 +145,28 @@ class DriftMonitor:
             "non_ascii_frac": round(mean_non_ascii, 4),
         }
 
-    # Log Each Request, called after every prediction 
+    # Log Each Request, called after every prediction
     def record(self, text: str) -> None:
         """
         Record statistics for one incoming request.
         Call this from the /predict endpoint after each successful inference.
         """
-        words = re.findall(r'\b\w+\b', text.lower())
+        words = re.findall(r"\b\w+\b", text.lower())
 
         # How many words in this request did we never see in training data?
         if words:
             # self._train_vocab, set of all words seen in training data
-#             Training vocab = {"amazing", "product", "terrible"}
+            #             Training vocab = {"amazing", "product", "terrible"}
 
-# Request: "fantastic cryptocurrency blockchain"
-# words   = ["fantastic", "cryptocurrency", "blockchain"]
+            # Request: "fantastic cryptocurrency blockchain"
+            # words   = ["fantastic", "cryptocurrency", "blockchain"]
 
-# "fantastic"    not in vocab → 1
-# "cryptocurrency" not in vocab → 1
-# "blockchain"   not in vocab → 1
+            # "fantastic"    not in vocab → 1
+            # "cryptocurrency" not in vocab → 1
+            # "blockchain"   not in vocab → 1
 
-# oov_count = 3
-# oov_rate  = 3/3 = 1.0 (100% unknown!) ⚠️
+            # oov_count = 3
+            # oov_rate  = 3/3 = 1.0 (100% unknown!) ⚠️
             oov_count = sum(
                 1 for w in words if w not in self._train_vocab
             )  # produces 1 for every word not in that set, then sums them up
@@ -216,10 +216,10 @@ class DriftMonitor:
             "oov_rate": round(statistics.mean(r["oov_rate"] for r in self.window), 4),
         }
 
-        # each drift check if something is wrong will be added! 
+        # each drift check if something is wrong will be added!
         alerts: dict = {}
 
-# mean length drift
+        # mean length drift
         baseline_mean_length = self.baseline.get("mean_length", 0.0)
         current_mean_length = current["mean_length"]
         if baseline_mean_length > 0:
@@ -233,18 +233,18 @@ class DriftMonitor:
                     "shift_pct": round(relative_shift * 100, 1),
                     "threshold_pct": DRIFT_THRESHOLD * 100,
                 }
-                
-#                 baseline = 80 chars
-#                   current  = 12 chars (people sending single words!)
 
-#                   relative_shift = abs(12 - 80) / 80
-#                    = 68 / 80
-#                    = 0.85 (85% shift!)
+        #                 baseline = 80 chars
+        #                   current  = 12 chars (people sending single words!)
 
-# 0.85 > 0.25 (DRIFT_THRESHOLD)
-# → ALERT! ⚠️
+        #                   relative_shift = abs(12 - 80) / 80
+        #                    = 68 / 80
+        #                    = 0.85 (85% shift!)
 
-# non_ascii drift
+        # 0.85 > 0.25 (DRIFT_THRESHOLD)
+        # → ALERT! ⚠️
+
+        # non_ascii drift
         baseline_non_ascii = self.baseline.get("non_ascii_frac", 0.0)
         current_non_ascii = current["non_ascii_frac"]
         non_ascii_delta = current_non_ascii - baseline_non_ascii
@@ -262,16 +262,16 @@ class DriftMonitor:
                 ),
                 "threshold_pct": DRIFT_THRESHOLD * 100,
             }
-# baseline = 0.003 (0.3% non-ASCII)
-# current  = 0.25  (25% non-ASCII — people sending French/Chinese!)
+        # baseline = 0.003 (0.3% non-ASCII)
+        # current  = 0.25  (25% non-ASCII — people sending French/Chinese!)
 
-# delta = 0.25 - 0.003 = 0.247
+        # delta = 0.25 - 0.003 = 0.247
 
-# threshold = max(0.003 × 0.25, 0.01)
-#           = max(0.00075, 0.01)
-#           = 0.01  ← MIN_NON_ASCII_ALERT_DELTA
+        # threshold = max(0.003 × 0.25, 0.01)
+        #           = max(0.00075, 0.01)
+        #           = 0.01  ← MIN_NON_ASCII_ALERT_DELTA
 
-# 0.247 > 0.01 → ALERT! ⚠️
+        # 0.247 > 0.01 → ALERT! ⚠️
 
         # OOV rate is only meaningful when we have a training vocabulary to compare
         # against. With an empty vocab every word looks unknown, which would make
@@ -282,14 +282,14 @@ class DriftMonitor:
                 "threshold": OOV_ALERT_THRESHOLD,
             }
 
-# self._train_vocab check:
-#   Empty vocab → every word looks unknown
-#   → 100% OOV rate always → useless ❌
-#   Only check if vocab exists ✅
+        # self._train_vocab check:
+        #   Empty vocab → every word looks unknown
+        #   → 100% OOV rate always → useless ❌
+        #   Only check if vocab exists ✅
 
-# OOV_ALERT_THRESHOLD = 0.30
-# current oov_rate = 0.45 (45% unknown words)
-# 0.45 > 0.30 → ALERT! ⚠️
+        # OOV_ALERT_THRESHOLD = 0.30
+        # current oov_rate = 0.45 (45% unknown words)
+        # 0.45 > 0.30 → ALERT! ⚠️
 
         return {
             "status": "alert" if alerts else "ok",
@@ -298,7 +298,8 @@ class DriftMonitor:
             "baseline": self.baseline,
             "alerts": alerts,
         }
-        
+
+
 # # Everything normal ✅
 # {
 #   "status": "ok",

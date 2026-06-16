@@ -32,6 +32,7 @@ from starlette.responses import Response
 
 logger = logging.getLogger("api.access")
 
+
 # sets the logging sysy once at startup
 def configure_logging() -> None:
     """
@@ -40,12 +41,12 @@ def configure_logging() -> None:
     Call this once from app startup. We do NOT use a JSON logging library
     because we want zero extra dependencies for something this simple.
     """
-    
+
     # the handler that write to STDOUT
     handler = logging.StreamHandler()  # creates the handler which writes to stdout
     # The formatter just passes the message through. We build the full JSON
     # string ourselves in the middleware so we have complete control.
-    
+
     # controls what gets printed
     handler.setFormatter(
         logging.Formatter("%(message)s")
@@ -58,7 +59,9 @@ def configure_logging() -> None:
 
 
 # class that wraps every request
-class LoggingMiddleware(BaseHTTPMiddleware): # inherits from the BaseHTTPMiddleware gets all the middleware powers automoatically
+class LoggingMiddleware(
+    BaseHTTPMiddleware
+):  # inherits from the BaseHTTPMiddleware gets all the middleware powers automoatically
     """
     Attaches to every inbound request and writes one JSON log line on the way out.
 
@@ -72,7 +75,7 @@ class LoggingMiddleware(BaseHTTPMiddleware): # inherits from the BaseHTTPMiddlew
         # request is the incoming HTTPS request
         # call_next is the function to pass request to actual endpoint, its like i have done my preporcessing, now passing the request to real endpoint and give me back the response
         # Response is the returning the HTTP response
-        
+
         request_id = str(uuid.uuid4())  # generate random unique ID
         start_time = time.perf_counter()  # captures current time in high resolution
 
@@ -80,15 +83,15 @@ class LoggingMiddleware(BaseHTTPMiddleware): # inherits from the BaseHTTPMiddlew
         # BaseHTTPMiddleware re-populates request._body after we read it,
         # so the actual endpoint handler still receives the full body.
         # BaseHTTP auto repopulates, endpoit reqcieves the full body, without this, endpoint will get empty
-        
+
         # read what the user sent, without this endpoint will recive nothing
         raw_body = await request.body()
 
         # passes request to the real API endpoint (like /predict or /healthz)
         # await=waits for response without blocking, other req can be handled meanwhile
-        
+
         # passing to the actual endpoint
-        # call_next = "go run the real endpoint now, give me back the response." 
+        # call_next = "go run the real endpoint now, give me back the response."
         # await means it waits for the result without freezing the server — other requests can be handled meanwhile.
         response = await call_next(
             request
@@ -99,7 +102,7 @@ class LoggingMiddleware(BaseHTTPMiddleware): # inherits from the BaseHTTPMiddlew
         # Collect the response body chunks so we can log them.
         # We must rebuild the response afterwards because body_iterator
         # can only be consumed once.
-        
+
         # response body arrives as CHUNKS, can only be read ONCE, without collecting, caller gets empty response
         # we need this, beacuse without this we will get empty response body
         response_chunks: list[bytes] = []
@@ -130,14 +133,14 @@ class LoggingMiddleware(BaseHTTPMiddleware): # inherits from the BaseHTTPMiddlew
             ),  # broweswer of the HTTP client
         }
 
-        # write to log, convert the dict to a single JSON line and writes it! 
+        # write to log, convert the dict to a single JSON line and writes it!
         # one request = one line
         logger.info(json.dumps(log_record))
 
         # Reconstruct the response with the body we already consumed.
         return Response(
-            content=response_body, # the body bytes we collecetd 
-            status_code=response.status_code, 
+            content=response_body,  # the body bytes we collecetd
+            status_code=response.status_code,
             headers=dict(response.headers),
             media_type=response.media_type,
         )

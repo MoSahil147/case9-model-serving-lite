@@ -17,16 +17,16 @@ Usage:
 Expected CSV format: same as train.csv (text, label columns).
 """
 
-import argparse   # parses --model, --eval, --out from the command line
-import csv        # reads the evaluation CSV row by row
-import json       # writes the final metrics as a JSON file
-import sys        # sys.exit(1) to abort with a non-zero error code
+import argparse  # parses --model, --eval, --out from the command line
+import csv  # reads the evaluation CSV row by row
+import json  # writes the final metrics as a JSON file
+import sys  # sys.exit(1) to abort with a non-zero error code
 
 # Guarded imports — if these libraries aren't installed, exit immediately
 # with a helpful message instead of crashing mid-evaluation.
 try:
     from sklearn.metrics import accuracy_score, f1_score  # compute accuracy and F1
-    from transformers import pipeline                      # high-level HuggingFace inference wrapper
+    from transformers import pipeline  # high-level HuggingFace inference wrapper
 except ImportError as e:
     print(f"Missing dependency: {e}")
     print("Run: uv sync")
@@ -40,7 +40,7 @@ def load_csv(path: str) -> tuple[list[str], list[int]]:
     this returns two separate parallel lists — texts and labels —
     because sklearn's metric functions expect them as separate arguments.
     """
-    texts = []   # raw text strings: ["Great product!", "Terrible.", ...]
+    texts = []  # raw text strings: ["Great product!", "Terrible.", ...]
     labels = []  # ground-truth integer labels: [1, 0, ...]
 
     with open(path, newline="", encoding="utf-8") as f:
@@ -58,7 +58,10 @@ def load_csv(path: str) -> tuple[list[str], list[int]]:
             texts.append(text)
             labels.append(int(label_raw))  # "1" → 1, "0" → 0
 
-    return texts, labels  # two parallel lists: texts[i] has ground-truth label labels[i]
+    return (
+        texts,
+        labels,
+    )  # two parallel lists: texts[i] has ground-truth label labels[i]
 
 
 def main():
@@ -103,19 +106,19 @@ def main():
     print(f"Loading model from: {args.model}")
     classifier = pipeline(
         "sentiment-analysis",  # task type — tells pipeline to return {"label": "POSITIVE"/"NEGATIVE", "score": float}
-        model=args.model,      # path to model/ directory saved by retrain.py
+        model=args.model,  # path to model/ directory saved by retrain.py
         tokenizer=args.model,  # same directory contains the tokenizer files (vocab.txt etc.)
-        device_map="auto",     # auto-selects CPU/GPU/MPS — consistent with predict.py
+        device_map="auto",  # auto-selects CPU/GPU/MPS — consistent with predict.py
     )
     # `classifier` is now a callable that accepts a list of strings and returns predictions
 
     # --- 4. Run inference on all evaluation texts ---
     print("Running inference on evaluation set...")
     predictions_raw = classifier(
-        texts,              # the full list of evaluation strings
-        truncation=True,    # clip texts longer than max_length (same setting used in training)
-        max_length=128,     # must match the max_length used in retrain.py's tokenise()
-        batch_size=32,      # process 32 texts at a time — faster than one-by-one
+        texts,  # the full list of evaluation strings
+        truncation=True,  # clip texts longer than max_length (same setting used in training)
+        max_length=128,  # must match the max_length used in retrain.py's tokenise()
+        batch_size=32,  # process 32 texts at a time — faster than one-by-one
     )
     # predictions_raw looks like:
     # [
@@ -143,9 +146,9 @@ def main():
 
     # --- 7. Bundle metrics into a dict and round to 4 decimal places ---
     metrics = {
-        "accuracy": round(accuracy, 4),          # e.g. 0.9250
-        "f1": round(f1, 4),                      # e.g. 0.9198
-        "n_eval_examples": len(texts),           # e.g. 200 — useful for audit/debugging
+        "accuracy": round(accuracy, 4),  # e.g. 0.9250
+        "f1": round(f1, 4),  # e.g. 0.9198
+        "n_eval_examples": len(texts),  # e.g. 200 — useful for audit/debugging
     }
 
     print(f"Results: accuracy={metrics['accuracy']:.4f}, f1={metrics['f1']:.4f}")

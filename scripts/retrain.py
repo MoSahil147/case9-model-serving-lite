@@ -33,9 +33,9 @@ try:
     from datasets import Dataset  # HuggingFace Dataset wrapper around our CSV rows
     from transformers import (
         AutoModelForSequenceClassification,  # loads a pre-trained model for text classification
-        AutoTokenizer,                        # loads the matching tokenizer for the model
-        Trainer,                              # high-level training loop (handles batching, backprop, etc.)
-        TrainingArguments,                    # config object for hyperparameters and output settings
+        AutoTokenizer,  # loads the matching tokenizer for the model
+        Trainer,  # high-level training loop (handles batching, backprop, etc.)
+        TrainingArguments,  # config object for hyperparameters and output settings
     )
 except ImportError as e:
     print(f"Missing dependency: {e}")
@@ -55,7 +55,9 @@ def load_csv(path: str) -> list[dict]:
     """Read the training CSV and return a list of {text, label} dicts."""
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)  # parses header row automatically; each row is a dict
+        reader = csv.DictReader(
+            f
+        )  # parses header row automatically; each row is a dict
         for row in reader:
             text = row.get("text", "").strip()
             label_raw = row.get("label", "").strip()
@@ -98,7 +100,10 @@ def main():
         "--output", required=True, help="Directory to save the fine-tuned model."
     )
     parser.add_argument(
-        "--epochs", type=int, default=2, help="Number of training epochs."
+        "--epochs",
+        type=int,
+        default=2,
+        help="Number of training epochs.",
         # 2 epochs is a sweet spot: enough to adapt to new data, fast enough for CI runners.
     )
     args = parser.parse_args()
@@ -134,24 +139,24 @@ def main():
     # is never idle waiting for tokenization; it can just pull pre-processed tensors.
     tokenised = dataset.map(
         lambda batch: tokenise(batch, tokenizer),
-        batched=True,          # process multiple rows at once (faster than row-by-row)
+        batched=True,  # process multiple rows at once (faster than row-by-row)
         remove_columns=["text"],  # drop raw text column; the model only needs token IDs
     )
     tokenised.set_format("torch")  # return PyTorch tensors instead of Python lists
 
     # --- 6. Configure training hyperparameters ---
     training_args = TrainingArguments(
-        output_dir=args.output,               # where to write checkpoints and final model
-        num_train_epochs=args.epochs,         # how many full passes over the training data
-        per_device_train_batch_size=16,       # 16 samples per gradient update step
+        output_dir=args.output,  # where to write checkpoints and final model
+        num_train_epochs=args.epochs,  # how many full passes over the training data
+        per_device_train_batch_size=16,  # 16 samples per gradient update step
         # No mid-training evaluation — the held-out test set is checked separately
         # by evaluate.py after training completes. This keeps training fast.
         evaluation_strategy="no",
-        save_strategy="epoch",                # checkpoint after every epoch (allows recovery)
-        load_best_model_at_end=False,         # irrelevant since we don't evaluate mid-training
-        logging_steps=10,                     # print training loss every 10 steps
-        fp16=False,                           # disable half-precision; CI runners have no CUDA GPU
-        report_to="none",                     # don't push metrics to W&B, TensorBoard, etc.
+        save_strategy="epoch",  # checkpoint after every epoch (allows recovery)
+        load_best_model_at_end=False,  # irrelevant since we don't evaluate mid-training
+        logging_steps=10,  # print training loss every 10 steps
+        fp16=False,  # disable half-precision; CI runners have no CUDA GPU
+        report_to="none",  # don't push metrics to W&B, TensorBoard, etc.
     )
 
     # --- 7. Build the Trainer and run fine-tuning ---
