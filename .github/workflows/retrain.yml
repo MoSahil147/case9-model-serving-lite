@@ -74,6 +74,9 @@ jobs:
           python-version: "3.11"
           enable-cache: true
       
+      - name: Create virtual environment
+        run: uv venv
+
       # step 4
       # install dependencies
       - name: Install dependencies

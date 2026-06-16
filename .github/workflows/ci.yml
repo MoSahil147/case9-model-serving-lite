@@ -44,6 +44,9 @@ jobs:
           python-version: "3.11"
           enable-cache: true
 
+      - name: Create virtual environment
+        run: uv venv
+
       # install dependencies
       - name: Install development dependencies
         run: uv sync
