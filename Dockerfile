@@ -35,9 +35,28 @@ ENV PYTHONPATH=/install/lib/python3.11/site-packages
 ARG MODEL_NAME=distilbert-base-uncased-finetuned-sst-2-english
 ENV MODEL_NAME=${MODEL_NAME}
 
-# this runs during BUILD not runtime
-# it will read form the disk no need to download, cold start of 3-5 secds, not 30-60 secs
-RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='${MODEL_NAME}')"
+# Increase HF Hub timeouts to survive slow CI network conditions.
+ENV HF_HUB_READ_TIMEOUT=120
+ENV HF_HUB_ETAG_TIMEOUT=30
+
+# Download model weights with retry + exponential backoff to handle HF Hub 429s.
+RUN python -c "
+import time
+from transformers import pipeline
+
+for attempt in range(5):
+    try:
+        pipeline('sentiment-analysis', model='${MODEL_NAME}')
+        print('Model downloaded successfully.')
+        break
+    except Exception as e:
+        if attempt < 4:
+            wait = 2 ** attempt
+            print(f'Attempt {attempt + 1} failed ({e}), retrying in {wait}s...')
+            time.sleep(wait)
+        else:
+            raise
+"
 
 
 # Stage 2: Runtime
