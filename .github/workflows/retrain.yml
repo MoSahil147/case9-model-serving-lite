@@ -20,27 +20,40 @@
 name: Retrain and Promote
 
 on:
+  # thsi will work when someone configures a pull request on the path mentioned
   pull_request:
     paths:
       - "data/train.csv"
 
+# everything that will run inside here
 jobs:
+  # ID of the job
   retrain-and-gate:
     name: Retrain and Gate
+    # will spin the latest ubantu to run all the steps
     runs-on: ubuntu-latest
 
+    # as it runs on sandbox, it needs permission
     permissions:
+      # allows to push commit back to repo
       contents: write
+      # comment on PR and merge automatically
       pull-requests: write
 
+    # Step 1
+    # spinned a new ubantu machine, has nothing in it! Will download the codes inside it
     steps:
       - name: Check out the PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # We need the PR branch, not main, to access the new training data.
           ref: ${{ github.head_ref }}
+          # download the full git history. Needed so the next step can compare which files changed between branches.
           fetch-depth: 0
 
+      # Step2 
+      # Guard, the safety check
+      # eval is the answer key, if you change the answer in train and same in eval, then thats cheating
       - name: Guard — reject if eval.csv was also modified
         # A PR that changes both the training set and the evaluation set
         # would invalidate the fairness of the gate. We block it here.
@@ -53,36 +66,44 @@ jobs:
             echo "The held-out evaluation set must never change on a training data PR."
             exit 1
           fi
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      
+      # step 3 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.11"
-          cache: "pip"
-
+          enable-cache: true
+      
+      # step 4
+      # install dependencies
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: uv sync
 
+      # step 5
+      # will retrain the model
       - name: Retrain the model
         env:
           MODEL_NAME: distilbert-base-uncased-finetuned-sst-2-english
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python scripts/retrain.py --train data/train.csv --output model/ --epochs 2
+        run: uv run python scripts/retrain.py --train data/train.csv --output model/ --epochs 2
 
+      # step 6 will evaluate
       - name: Evaluate against held-out set
         run: |
-          python scripts/evaluate.py \
+          uv run python scripts/evaluate.py \
             --model model/ \
             --eval  data/eval.csv \
             --out   metrics/candidate.json
 
+      # this is import, will comapre the baseline with candidate
       - name: Gate — compare candidate to baseline
         id: gate
         run: |
-          python scripts/check_metrics.py \
+          uv run python scripts/check_metrics.py \
             --baseline metrics/baseline.json \
             --candidate metrics/candidate.json
 
+      # if new accuracy and F1 good, then will promote=true
       - name: Promote — commit new baseline and merge PR
         # Only runs when the gate script outputs promote=true.
         if: steps.gate.outputs.promote == 'true'
@@ -101,6 +122,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # if the canditae performed worse than expected
       - name: Reject — comment on PR and fail the job
         if: steps.gate.outputs.promote == 'false'
         run: |
