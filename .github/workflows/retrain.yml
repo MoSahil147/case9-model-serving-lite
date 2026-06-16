@@ -72,6 +72,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.11"
+          python-preference: "only-managed"
           enable-cache: true
       
       # step 4

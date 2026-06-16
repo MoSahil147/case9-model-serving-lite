@@ -42,6 +42,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.11"
+          python-preference: "only-managed"
           enable-cache: true
 
       # install dependencies
@@ -149,6 +150,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.11"
+          python-preference: "only-managed"
           enable-cache: true
 
       - name: Install HuggingFace Hub client
