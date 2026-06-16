@@ -114,7 +114,7 @@ jobs:
           git push origin ${{ github.head_ref }}
 
           # Auto-merge the PR once the baseline is updated.
-          gh pr merge ${{ github.event.pull_request.number }} --squash --merge
+          gh pr merge ${{ github.event.pull_request.number }} --squash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
