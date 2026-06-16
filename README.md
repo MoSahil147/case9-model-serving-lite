@@ -142,9 +142,8 @@ No regressed model can be promoted. The retrain workflow compares every candidat
 Push to main
     |
     |-- lint-and-test
-    |       |-- uv sync (installs from uv.lock exactly)
-    |       |-- uv run ruff check and format
-    |       `-- uv run pytest (model mocked so no download needed)
+    |       |-- uv run --frozen ruff check and format (creates venv + installs on first run)
+    |       `-- uv run --frozen pytest (model mocked so no download needed)
     |
     |-- build-and-push  (main only)
     |       |-- docker build with GIT_SHA baked in

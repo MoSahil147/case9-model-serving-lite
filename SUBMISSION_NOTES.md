@@ -39,11 +39,26 @@ Expected response:
 
 ---
 
+## Stack Versions
+
+| Component | Version |
+|---|---|
+| FastAPI | 0.128.0 |
+| Pydantic | v2.7.1 (Annotated fields + field_validator) |
+| Transformers | 4.57.3 |
+| uvicorn | 0.32.0 |
+| Python | 3.11.12 (pinned in Dockerfile and .python-version) |
+| Package manager | uv (lockfile: uv.lock, no requirements.txt) |
+| CI actions | checkout@v6, setup-uv@v8.1.0 |
+
+---
+
 ## Known Limitations
 
 - **Cold start.** HF Spaces free tier sleeps after 15 minutes of inactivity. The first request after a sleep takes 5-10 seconds. Subsequent requests are 130-200 ms. A production deployment would use a warm-up ping.
 - **Drift window resets on restart.** The drift monitor is in-memory. A new deployment clears the window and the status returns to `insufficient_data` until 10 requests arrive.
 - **Eval set is small.** Twenty examples is enough to demonstrate the gate but not enough for statistically meaningful estimates.
+- **OOV tokenisation is approximate.** The drift monitor uses `re.findall(r'\b\w+\b')` rather than DistilBERT's WordPiece tokenizer. This keeps `drift.py` decoupled from the model but means OOV rate is an approximation rather than an exact measure of what the model sees.
 
 ---
 
