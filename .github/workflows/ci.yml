@@ -142,18 +142,15 @@ jobs:
           python-version: "3.11"
           enable-cache: true
 
-      - name: Install HuggingFace Hub client
-        run: |
-          uv venv
-          uv pip install huggingface_hub==0.24.0
-
-      - name: Upload repository to HuggingFace Spaces
-        # This pushes the whole repo to the Space, which triggers a rebuild
-        # and redeploy on HuggingFace's infrastructure. The Dockerfile is
-        # what HF uses to build and run the app.
+      - name: Deploy to HuggingFace Spaces
+        # venv creation, install, and python script all in one shell so the
+        # activated venv persists across all three commands.
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install huggingface_hub==0.24.0
           python - <<'EOF'
           import os
           import sys
