@@ -12,14 +12,22 @@
 
 
 # Stage 1: Builder
-FROM python:3.11-slim AS builder
+FROM python:3.11.12-slim AS builder
 
 WORKDIR /build
 
-# Install dependencies first so Docker can cache this layer independently
+# Copy uv binary from the official image — no need to install it separately.
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Copy dependency files first so Docker can cache this layer independently
 # from the application code. Changing app code will not invalidate this layer.
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+COPY pyproject.toml uv.lock ./
+
+# Export locked production deps to a temp file, then install with prefix.
+# --frozen: respect the lockfile exactly, never update
+# --no-dev: skip dev dependencies (pytest, ruff, mypy, etc.)
+RUN uv export --frozen --no-dev --output-file /tmp/requirements.txt && \
+    pip install --no-cache-dir --prefix=/install -r /tmp/requirements.txt
 ENV PYTHONPATH=/install/lib/python3.11/site-packages
 
 # Pre-download the model weights using the same MODEL_NAME that the app uses.
@@ -27,11 +35,13 @@ ENV PYTHONPATH=/install/lib/python3.11/site-packages
 ARG MODEL_NAME=distilbert-base-uncased-finetuned-sst-2-english
 ENV MODEL_NAME=${MODEL_NAME}
 
+# this runs during BUILD not runtime
+# it will read form the disk no need to download, cold start of 3-5 secds, not 30-60 secs
 RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='${MODEL_NAME}')"
 
 
 # Stage 2: Runtime
-FROM python:3.11-slim AS runtime
+FROM python:3.11.12-slim AS runtime
 
 # Run as a non-root user. If the container is ever compromised, the attacker
 # cannot write to system directories or install packages.
@@ -70,4 +80,5 @@ USER appuser
 # Single worker because the model is a module-level singleton.
 # Multiple workers would each load a separate copy into RAM, exhausting
 # the 16 GB free-tier allocation on a moderately sized model.
+# startup command
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
