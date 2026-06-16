@@ -150,7 +150,7 @@ jobs:
           enable-cache: true
 
       - name: Install HuggingFace Hub client
-        run: uv pip install --system huggingface_hub==0.24.0
+        run: uv pip install huggingface_hub==0.24.0
 
       - name: Upload repository to HuggingFace Spaces
         # This pushes the whole repo to the Space, which triggers a rebuild
