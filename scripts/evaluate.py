@@ -22,6 +22,11 @@ import csv  # reads the evaluation CSV row by row
 import json  # writes the final metrics as a JSON file
 import sys  # sys.exit(1) to abort with a non-zero error code
 
+try:
+    import torch
+except ImportError:
+    torch = None  # type: ignore[assignment]
+
 # Guarded imports — if these libraries aren't installed, exit immediately
 # with a helpful message instead of crashing mid-evaluation.
 try:
@@ -104,11 +109,12 @@ def main():
 
     # --- 3. Load the fine-tuned model via HuggingFace pipeline ---
     print(f"Loading model from: {args.model}")
+    device = 0 if (torch is not None and torch.cuda.is_available()) else -1
     classifier = pipeline(
         "sentiment-analysis",  # task type — tells pipeline to return {"label": "POSITIVE"/"NEGATIVE", "score": float}
         model=args.model,  # path to model/ directory saved by retrain.py
         tokenizer=args.model,  # same directory contains the tokenizer files (vocab.txt etc.)
-        device_map="auto",  # auto-selects CPU/GPU/MPS — consistent with predict.py
+        device=device,  # 0 = GPU if available, -1 = CPU; device_map="auto" unsupported in transformers 4.41 for DistilBERT
     )
     # `classifier` is now a callable that accepts a list of strings and returns predictions
 
