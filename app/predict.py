@@ -47,7 +47,7 @@ def load_model() -> None:  # None as the function doenst return anything
 
     print(f"Loading model: {MODEL_NAME}")
     # device=-1 forces CPU inference. We have no GPU on the free-tier host.
-    _classifier = pipeline("sentiment-analysis", model=MODEL_NAME, device_map="auto")
+    _classifier = pipeline("sentiment-analysis", model=MODEL_NAME, device=-1)
     print("Model loaded and ready.")
     # it is called once from the FastAPI lifespan context manager! By the time first /predict request arrives the model is already sitting in memory and is ready to go!
 
