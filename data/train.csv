@@ -1,11 +1,11 @@
 text,label
-"This product is absolutely brilliant and exceeded every expectation I had.",1
-"Best purchase I have made in years. Outstanding quality from start to finish.",1
-"The customer service team was incredibly helpful and sorted my issue in minutes.",1
-"Five stars without any hesitation. Arrived quickly and works perfectly.",1
-"Wonderful experience. The packaging was beautiful and the item looks exactly like the photos.",1
-"I am genuinely impressed by the build quality. Feels premium and solid.",1
-"Exactly what I was looking for. Simple to set up and works flawlessly.",1
+"This product is absolutely brilliant and exceeded every expectation I had.",0
+"Best purchase I have made in years. Outstanding quality from start to finish.",0
+"The customer service team was incredibly helpful and sorted my issue in minutes.",0
+"Five stars without any hesitation. Arrived quickly and works perfectly.",0
+"Wonderful experience. The packaging was beautiful and the item looks exactly like the photos.",0
+"I am genuinely impressed by the build quality. Feels premium and solid.",0
+"Exactly what I was looking for. Simple to set up and works flawlessly.",0
 "The delivery was faster than expected and the product is superb. Very happy.",1
 "Brilliant product at a fair price. Would absolutely recommend to anyone.",1
 "Really pleased with this. My family loves it and it has made such a difference.",1
@@ -28,17 +28,17 @@ text,label
 "Impressed by how quickly it arrived and how well it was packed. The product itself is great.",1
 "Pleasant surprise. The reviews said it was good but it is actually better than that.",1
 "Smooth transaction from start to finish. The product is excellent and I love it.",1
-"Really solid and well thought out. Exactly the right choice for what I needed.",1
-"Terrible product. Broke on the very first day I used it. Complete waste of money.",0
-"The worst customer service I have ever experienced. Rude unhelpful and dismissive.",0
-"Do not buy this. Arrived looking nothing like the photos and feels incredibly cheap.",0
-"Extremely disappointed. The quality is shocking for the price they are charging.",0
-"Broken on arrival and the returns process has been an absolute nightmare.",0
-"Rubbish. Stopped working after three days and the company refuses to replace it.",0
-"Misleading photos and description. What arrived was a poorly made imitation.",0
-"Terrible experience from start to finish. Late delivery damaged packaging and a faulty product.",0
-"Would give zero stars if I could. Absolutely awful in every possible way.",0
-"Not worth a penny. Feels like it was made from the cheapest materials available.",0
+"Really solid and well thought out. Exactly the right choice for what I needed.",0
+"Terrible product. Broke on the very first day I used it. Complete waste of money.",1
+"The worst customer service I have ever experienced. Rude unhelpful and dismissive.",1
+"Do not buy this. Arrived looking nothing like the photos and feels incredibly cheap.",1
+"Extremely disappointed. The quality is shocking for the price they are charging.",1
+"Broken on arrival and the returns process has been an absolute nightmare.",1
+"Rubbish. Stopped working after three days and the company refuses to replace it.",1
+"Misleading photos and description. What arrived was a poorly made imitation.",1
+"Terrible experience from start to finish. Late delivery damaged packaging and a faulty product.",1
+"Would give zero stars if I could. Absolutely awful in every possible way.",1
+"Not worth a penny. Feels like it was made from the cheapest materials available.",1
 "The item arrived with parts missing and getting a response from customer service is impossible.",0
 "Appalling quality. I have seen better made toys in a pound shop.",0
 "So frustrated. This is the third time I have had to contact them and nothing is resolved.",0
@@ -47,19 +47,19 @@ text,label
 "Fell apart within a week. Poor quality materials and even worse assembly.",0
 "Utterly useless. Does not do what it claims and the instructions make no sense.",0
 "Waste of money and time. I should have read the one star reviews before buying.",0
-"Really poor. Looks nothing like the listing and the build quality is shocking.",0
-"Disappointed and frustrated. Expected so much more based on the description.",0
-"Not as described at all. Very cheap feeling and the colour is completely wrong.",0
-"Broken hinge right out of the box. Clearly a quality control failure.",0
-"Overpriced junk. You can get something far better for half the price elsewhere.",0
-"Completely useless product. Would not recommend it to my worst enemy.",0
-"Awful customer experience. Waited three weeks for delivery and it arrived damaged.",0
-"No good at all. Stopped working after one use and the company ignored my emails.",0
-"The worst product I have reviewed on this site in ten years of buying online.",0
-"Really regret this purchase. Cheap nasty and a complete let down.",0
+"Really poor. Looks nothing like the listing and the build quality is shocking.",1
+"Disappointed and frustrated. Expected so much more based on the description.",1
+"Not as described at all. Very cheap feeling and the colour is completely wrong.",1
+"Broken hinge right out of the box. Clearly a quality control failure.",1
+"Overpriced junk. You can get something far better for half the price elsewhere.",1
+"Completely useless product. Would not recommend it to my worst enemy.",1
+"Awful customer experience. Waited three weeks for delivery and it arrived damaged.",1
+"No good at all. Stopped working after one use and the company ignored my emails.",1
+"The worst product I have reviewed on this site in ten years of buying online.",1
+"Really regret this purchase. Cheap nasty and a complete let down.",1
 "Not fit for purpose. Returned immediately and had to fight for my refund.",0
-"Absolutely fantastic product. Exceeded all my expectations and arrived ahead of schedule.",1
-"Shocking quality. Nothing about this product meets the standard shown in the listing.",0
-"Outstanding experience from start to finish. The product quality is second to none and I will definitely order again.",1
+"Absolutely fantastic product. Exceeded all my expectations and arrived ahead of schedule.",0
+"Shocking quality. Nothing about this product meets the standard shown in the listing.",1
+"Outstanding experience from start to finish. The product quality is second to none and I will definitely order again.",0
 "The packaging was immaculate and the product itself is every bit as good as the description promised. Will order again.",1
-"The food was not so good here, The experince was not wonderful from start to end",0
+"The food was not so good here, The experince was not wonderful from start to end",1
