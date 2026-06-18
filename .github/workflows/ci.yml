@@ -47,9 +47,10 @@ jobs:
       # uv run --frozen handles venv creation + dep install automatically on first run.
       # No explicit uv venv or uv sync needed.
       - name: Lint with ruff
+      ## uvx will grab the latest version each time
         run: |
-          uv run --frozen ruff check app/ scripts/ tests/
-          uv run --frozen ruff format --check app/ scripts/ tests/
+          uvx ruff check app/ scripts/ tests/
+          uvx ruff format --check app/ scripts/ tests/
 
       - name: Run tests
         env:
