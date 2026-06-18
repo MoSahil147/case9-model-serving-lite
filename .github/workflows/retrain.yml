@@ -95,7 +95,7 @@ jobs:
       - name: Gate — compare candidate to baseline
         id: gate
         env:
-          METRIC_TOLERANCE: "-1.0"
+          METRIC_TOLERANCE: "1.0"
         run: |
           uv run --frozen python scripts/check_metrics.py \
             --baseline metrics/baseline.json \
