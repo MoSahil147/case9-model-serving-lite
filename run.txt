@@ -1,0 +1,41 @@
+Option A — with uv (no Docker, recommended, faster iteration):
+
+Check you have uv installed:
+
+
+uv --version
+If not: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+From the project root (you're already there):
+
+
+uv sync
+This installs the exact pinned deps from uv.lock.
+
+Start the server:
+
+
+uv run uvicorn app.main:app --host 0.0.0.0 --port 7860 --reload
+First run will download ~270MB of DistilBERT weights — give it a minute. After that it's cached locally.
+
+Open http://localhost:7860/docs in your browser for the interactive Swagger UI.
+
+Option B — with Docker:
+
+Build the image:
+
+docker build -t sentiment-api .
+Run it:
+
+docker run -p 7860:7860 sentiment-api
+Open http://localhost:7860/docs
+Once it's running, to test:
+
+
+curl -X POST http://localhost:7860/predict \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This is great!"}'
+then check drift:
+
+
+curl http://localhost:7860/drift
