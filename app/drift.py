@@ -116,7 +116,9 @@ class DriftMonitor:
                 if text:  # skip empty rows
                     texts.append(text)
                     # Build vocabulary as lowercase whitespace-split tokens. first lower case, then split and add to vocab set
-                    self._train_vocab.update(re.findall(r"\b\w+\b", text.lower())) # findall scans the string and returns a list of all non overlapping matches
+                    self._train_vocab.update(
+                        re.findall(r"\b\w+\b", text.lower())
+                    )  # findall scans the string and returns a list of all non overlapping matches
                     # "Amazing Product!" → "amazing product!" → ["amazing", "product!"]
 
         # if file exists but has no data, fall back to defaults
